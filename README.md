@@ -51,4 +51,4 @@ EcoVacation is a premium, full-stack platform for a Sustainability NGO. It enabl
 
 ---
 
-EcoLumina - Technology for a greener tomorrow. 🌍✨
+EcoVacation - Technology for a greener tomorrow. 🌍✨
