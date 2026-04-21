@@ -23,8 +23,10 @@ export const getProject = (id) => api.get(`/projects/${id}`);
 export const postDonation = (data) => api.post('/donations', data);
 export const getDonationHistory = (id) => api.get(`/donations/history/${id}`);
 
-// Volunteers
+// Volunteers & Members
 export const applyActivity = (data) => api.post('/volunteers/apply', data);
 export const getVolunteerActivities = (id) => api.get(`/volunteers/activities/${id}`);
+export const getMembers = () => api.get('/volunteers/members');
+export const getMember = (id) => api.get(`/volunteers/member/${id}`);
 
 export default api;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, Leaf, Users, Globe, ChevronRight, Mail, Phone, MapPin, 
@@ -151,11 +151,24 @@ const Home = () => {
 };
 
 const ProjectsPage = () => {
-  const projects = [
-    { id: 1, title: 'Reforestation 2024', status: 'Ongoing', cat: 'Climate' },
-    { id: 2, title: 'Clean Water Initiative', status: 'Completed', cat: 'Resources' },
-    { id: 3, title: 'Electric Schools', status: 'Future', cat: 'Energy' }
-  ];
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.getProjects();
+        setProjects(data);
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  if (loading) return <div className="container section">Loading projects...</div>;
 
   return (
     <div className="projects-page fade-in">
@@ -163,14 +176,14 @@ const ProjectsPage = () => {
       <div className="container section">
         <div className="grid">
           {projects.map(p => (
-            <div key={p.id} className="project-card-full glass">
+            <div key={p._id} className="project-card-full glass">
               <div className="pc-head">
                 <span className={`status-badge status-${p.status.toLowerCase()}`}>{p.status}</span>
-                <span className="pc-cat">{p.cat}</span>
+                <span className="pc-cat">{p.category}</span>
               </div>
               <h3>{p.title}</h3>
-              <p>Discover the journey of this initiative, from challenges to global impact.</p>
-              <Link to={`/projects/${p.id}`} className="btn-link">View Details <ChevronRight size={16} /></Link>
+              <p>{p.description.substring(0, 100)}...</p>
+              <Link to={`/projects/${p._id}`} className="btn-link">View Details <ChevronRight size={16} /></Link>
             </div>
           ))}
         </div>
@@ -179,36 +192,271 @@ const ProjectsPage = () => {
   );
 };
 
-const AboutUs = () => (
-  <div className="about-page fade-in">
-    <div className="page-header"><h1>About EcoVacation</h1></div>
-    <div className="container section">
-      <h2 className="section-title">The Team</h2>
-      <div className="grid">
-        <div className="team-card text-center">
-          <div className="avatar">JD</div>
-          <h4>Jane Doe</h4>
-          <p>Founder & CEO</p>
-          <Link to="/portfolio/jane" className="btn-link">View Portfolio</Link>
-        </div>
-        <div className="team-card text-center">
-          <div className="avatar">AS</div>
-          <h4>Adam Smith</h4>
-          <p>Operations Lead</p>
-          <Link to="/portfolio/adam" className="btn-link">View Portfolio</Link>
+const ProjectDetail = () => {
+  const { id } = useParams();
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const { data } = await api.getProject(id);
+        setProject(data);
+      } catch (err) {
+        console.error('Error fetching project:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProject();
+  }, [id]);
+
+  if (loading) return <div className="container section text-center"><h2>Loading project...</h2></div>;
+  if (!project) return <div className="container section text-center"><h2>Project not found</h2></div>;
+
+  const startYear = project.createdAt ? new Date(project.createdAt).getFullYear() : 'N/A';
+  const progressPercent = project.goalAmount ? (project.currentAmount / project.goalAmount) * 100 : 0;
+
+  return (
+    <motion.div className="project-detail fade-in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      {/* Hero Section */}
+      <div className="project-hero" style={{ backgroundImage: `url(${project.image})` }}>
+        <div className="hero-overlay">
+          <div className="container">
+            <button onClick={() => navigate(-1)} className="btn-back">← Back</button>
+            <h1>{project.title}</h1>
+            <p className="lead">{project.category}</p>
+          </div>
         </div>
       </div>
-      
-      <h2 className="section-title mt-4">Our Volunteers</h2>
-      <div className="volunteers-list impact-scroller">
-        <div className="v-card"><span>Sarah L.</span></div>
-        <div className="v-card"><span>Mike R.</span></div>
-        <div className="v-card"><span>Elena K.</span></div>
-        <div className="v-card"><span>David O.</span></div>
+
+      <div className="container project-detail-content section">
+        <div className="grid-2">
+          {/* Main Content */}
+          <div className="detail-main">
+            {/* Description */}
+            <section className="detail-section">
+              <h2>About This Project</h2>
+              <p>{project.description}</p>
+            </section>
+
+            {/* Gallery */}
+            {project.gallery && project.gallery.length > 0 && (
+              <section className="detail-section">
+                <h2>Project Gallery</h2>
+                <div className="gallery-grid">
+                  {project.gallery.map((img, idx) => (
+                    <div key={idx} className="gallery-item" style={{ backgroundImage: `url(${img})` }}></div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Challenges */}
+            {project.challenges && (
+              <section className="detail-section">
+                <h2>Challenges Faced</h2>
+                <p>{project.challenges}</p>
+              </section>
+            )}
+
+            {/* Outcomes */}
+            {project.outcomes && (
+              <section className="detail-section">
+                <h2>Outcomes & Impact</h2>
+                <p>{project.outcomes}</p>
+              </section>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="detail-sidebar">
+            {/* Project Info Card */}
+            <div className="glass p-3 info-card">
+              <h3>Project Details</h3>
+              
+              {project.location && (
+                <div className="info-item">
+                  <MapPin size={18} />
+                  <div>
+                    <strong>Location</strong>
+                    <p>{project.location}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="info-item">
+                <Clock size={18} />
+                <div>
+                  <strong>Started</strong>
+                  <p>{startYear}</p>
+                </div>
+              </div>
+
+              <div className="info-item">
+                <span className={`status-badge status-${project.status.toLowerCase()}`}>{project.status}</span>
+              </div>
+            </div>
+
+            {/* Funding Progress */}
+            {project.goalAmount > 0 && (
+              <div className="glass p-3 funding-card">
+                <h3>Funding Progress</h3>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%` }}></div>
+                </div>
+                <p className="progress-text">${project.currentAmount.toLocaleString()} of ${project.goalAmount.toLocaleString()}</p>
+                <p className="progress-percent">{Math.round(progressPercent)}% funded</p>
+                <Link to="/get-involved" className="btn btn-primary full-width mt-2">Donate to Project</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const AboutUs = () => {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const { data } = await api.getMembers();
+        setMembers(data);
+      } catch (err) {
+        console.error('Error fetching members:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMembers();
+  }, []);
+
+  const teamMembers = members.filter(m => m.type === 'TeamMember');
+  const volunteers = members.filter(m => m.type === 'Volunteer');
+
+  return (
+    <div className="about-page fade-in">
+      <div className="page-header"><h1>About EcoVacation</h1></div>
+      <div className="container section">
+        <h2 className="section-title">The Team</h2>
+        <div className="grid">
+          {loading ? (
+            <p>Loading team members...</p>
+          ) : teamMembers.length > 0 ? (
+            teamMembers.map(member => (
+              <div key={member._id} className="team-card text-center glass p-3">
+                {member.photo ? (
+                  <img src={member.photo} alt={member.name} className="member-avatar-img" />
+                ) : (
+                  <div className="avatar">{member.name.charAt(0)}</div>
+                )}
+                <h4>{member.name}</h4>
+                <p>{member.designation}</p>
+                <Link to={`/member/${member._id}`} className="btn-link">View Portfolio</Link>
+              </div>
+            ))
+          ) : (
+            <p>No team members found.</p>
+          )}
+        </div>
+        
+        <h2 className="section-title mt-4">Our Volunteers</h2>
+        <div className="volunteers-list impact-scroller">
+          {volunteers.length > 0 ? (
+            volunteers.map(volunteer => (
+              <div key={volunteer._id} className="v-card">
+                <Link to={`/member/${volunteer._id}`} className="volunteer-link">{volunteer.name}</Link>
+              </div>
+            ))
+          ) : (
+            <p>No volunteers found.</p>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
+
+const MemberDetail = () => {
+  const { id } = useParams();
+  const [member, setMember] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMember = async () => {
+      try {
+        const { data } = await api.getMember(id);
+        setMember(data);
+      } catch (err) {
+        console.error('Error fetching member:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMember();
+  }, [id]);
+
+  if (loading) return <div className="container section text-center"><h2>Loading profile...</h2></div>;
+  if (!member) return <div className="container section text-center"><h2>Member not found</h2></div>;
+
+  return (
+    <motion.div className="member-detail fade-in" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <div className="container member-detail-content section">
+        <button onClick={() => navigate(-1)} className="btn-back">← Back</button>
+
+        <div className="member-hero glass">
+          <div className="member-photo-section">
+            {member.photo ? (
+              <img src={member.photo} alt={member.name} className="member-photo-circle" />
+            ) : (
+              <div className="avatar-large">{member.name.charAt(0)}</div>
+            )}
+          </div>
+
+          <div className="member-info-section">
+            <h1>{member.name}</h1>
+            <p className="member-role">{member.designation}</p>
+            
+            {member.bio && (
+              <section className="member-bio">
+                <h2>About</h2>
+                <p>{member.bio}</p>
+              </section>
+            )}
+
+            {member.portfolio && member.portfolio.length > 0 && (
+              <section className="member-portfolio">
+                <h2>Portfolio & Projects</h2>
+                <div className="portfolio-list">
+                  {member.portfolio.map((project, idx) => (
+                    <div key={idx} className="portfolio-item">
+                      <h4>{project.projectName}</h4>
+                      {project.description && <p>{project.description}</p>}
+                      {project.year && <span className="year">Year: {project.year}</span>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {member.type === 'TeamMember' && (
+              <div className="member-contact mt-4">
+                <h3>Contact</h3>
+                <p><Mail size={18} /> Reach out through EcoVacation contact page</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 const CSR = () => (
   <div className="csr-page fade-in">
@@ -417,7 +665,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/about" element={<AboutUs />} />
+            <Route path="/member/:id" element={<MemberDetail />} />
             <Route path="/csr" element={<CSR />} />
             <Route path="/get-involved" element={<GetInvolved />} />
             <Route path="/contact" element={<ContactUs />} />
