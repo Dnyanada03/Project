@@ -29,4 +29,24 @@ export const getVolunteerActivities = (id) => api.get(`/volunteers/activities/${
 export const getMembers = () => api.get('/volunteers/members');
 export const getMember = (id) => api.get(`/volunteers/member/${id}`);
 
+// Advocacy
+export const getAdvocacyPosts = () => api.get('/advocacy');
+
+// Admin
+export const createProject = (data) => api.post('/admin/projects', data);
+export const updateProject = (id, data) => api.put(`/admin/projects/${id}`, data);
+export const deleteProject = (id) => api.delete(`/admin/projects/${id}`);
+
+export const createMember = (data) => api.post('/admin/members', data);
+export const updateMember = (id, data) => api.put(`/admin/members/${id}`, data);
+export const deleteMember = (id) => api.delete(`/admin/members/${id}`);
+
+export const getApplications = () => api.get('/admin/applications');
+export const getAllApplications = () => api.get('/admin/applications/all');
+export const approveApplication = (id) => api.put(`/admin/applications/${id}/approve`);
+export const rejectApplication = (id) => api.put(`/admin/applications/${id}/reject`);
+
+export const getAllDonations = () => api.get('/admin/donations');
+export const getDonationStats = () => api.get('/admin/donations/stats');
+
 export default api;

@@ -65,14 +65,26 @@ const Footer = () => (
 
 const Home = () => {
   const [recentProject, setRecentProject] = useState(null);
-  
-  useEffect(() => {
-    setRecentProject({
-      title: "Amazon Reforestation 2024",
-      description: "Restoring 5,000 hectares of primary rainforest in the heart of Brazil.",
-      image: "https://images.unsplash.com/photo-1516214104703-d870798883c5?auto=format&fit=crop&q=80&w=1200"
-    });
-  }, []);
+  const [advocacy, setAdvocacy] = useState([]);
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const { data } = await api.getAdvocacy();
+      setAdvocacy(data);
+    } catch (err) {
+      console.error("Error fetching advocacy:", err);
+    }
+  };
+
+  fetchData();
+
+  setRecentProject({
+    title: "Amazon Reforestation 2024",
+    description: "Restoring 5,000 hectares of primary rainforest in the heart of Brazil.",
+    image: "https://images.unsplash.com/photo-1516214104703-d870798883c5?auto=format&fit=crop&q=80&w=1200"
+  });
+}, []);
 
   return (
     <div className="home-page fade-in">
@@ -134,14 +146,17 @@ const Home = () => {
           <div className="glass advocacy-content">
             <h2>Global Advocacy & News</h2>
             <div className="news-grid">
-              <div className="news-item">
-                <span className="source">UN Environmental</span>
-                <p>New global treaty for plastic pollution reduction signed by 150 nations.</p>
-              </div>
-              <div className="news-item">
-                <span className="source">IPCC Report</span>
-                <p>Urgent action needed to keep global warming below 1.5 degrees.</p>
-              </div>
+              {advocacy.map(item => (
+                <div key={item._id} className="news-item">
+                  <span className="source">{item.source}</span>
+                  <p>{item.summary}</p>
+                  {item.url && (
+                    <a href={item.url} target="_blank" rel="noreferrer">
+                      Read More <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -477,6 +492,98 @@ const CSR = () => (
 
 const GetInvolved = () => {
   const [tab, setTab] = useState('volunteer');
+  const [projects, setProjects] = useState([]);
+  const [volunteerForm, setVolunteerForm] = useState({
+    name: '',
+    email: '',
+    projectId: '',
+    role: '',
+    hoursAvailable: 0,
+    availability: '',
+    interests: [],
+    designation: '',
+    bio: ''
+  });
+
+  const [donationForm, setDonationForm] = useState({
+    guestName: '',
+    guestEmail: '',
+    projectId: '',
+    amount: '',
+    currency: 'INR',
+    message: ''
+  });
+
+  const interestOptions = ['Reforestation', 'Ocean Cleanup', 'Education', 'Energy', 'Clean Water', 'Wildlife Conservation'];
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.getProjects();
+        setProjects(data);
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  const handleInterestToggle = (interest) => {
+    setVolunteerForm(prev => ({
+      ...prev,
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter(i => i !== interest)
+        : [...prev.interests, interest]
+    }));
+  };
+
+  const handleVolunteerSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Create activity record for volunteer application
+      const activityData = {
+        projectId: volunteerForm.projectId,
+        role: volunteerForm.role,
+        hoursContributed: volunteerForm.hoursAvailable,
+        volunteerEmail: volunteerForm.email,
+        volunteerName: volunteerForm.name,
+        availability: volunteerForm.availability,
+        status: 'Pending'
+      };
+      
+      await api.applyActivity(activityData);
+      alert('✅ Application submitted! Admin will review and approve shortly.');
+      setVolunteerForm({
+        name: '', email: '', projectId: '', role: '', hoursAvailable: 0,
+        availability: '', interests: [], designation: '', bio: ''
+      });
+    } catch (err) {
+      alert('❌ Error submitting application: ' + err.message);
+    }
+  };
+
+  const handleDonationSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const donationData = {
+        guestName: donationForm.guestName,
+        guestEmail: donationForm.guestEmail,
+        projectId: donationForm.projectId || null,
+        amount: parseFloat(donationForm.amount),
+        currency: donationForm.currency,
+        message: donationForm.message
+      };
+
+      await api.postDonation(donationData);
+      alert('✅ Thank you for your generous donation! You will receive a receipt at your email.');
+      setDonationForm({
+        guestName: '', guestEmail: '', projectId: '', amount: '', currency: 'INR', message: ''
+      });
+    } catch (err) {
+      alert('❌ Error processing donation: ' + err.message);
+    }
+  };
+
   return (
     <div className="get-involved-page fade-in">
       <div className="page-header"><h1>Get Involved</h1></div>
@@ -488,23 +595,159 @@ const GetInvolved = () => {
         
         <div className="form-card mt-3">
           {tab === 'volunteer' ? (
-            <form className="volunteer-form">
+            <form className="volunteer-form" onSubmit={handleVolunteerSubmit}>
               <h2>Volunteer Application</h2>
-              <input type="text" placeholder="Full Name" className="input-field" />
-              <input type="email" placeholder="Email Address" className="input-field" />
-              <textarea placeholder="Your Interests & Availability" className="input-field" rows="4"></textarea>
-              <button className="btn btn-primary">Submit Application</button>
+              <p style={{color: '#666', fontSize: '0.9rem'}}>Join our mission! Fill out your details and we'll match you with the perfect project.</p>
+              
+              <input 
+                type="text" 
+                placeholder="Full Name *" 
+                className="input-field" 
+                required
+                value={volunteerForm.name}
+                onChange={(e) => setVolunteerForm({...volunteerForm, name: e.target.value})}
+              />
+              <input 
+                type="email" 
+                placeholder="Email Address *" 
+                className="input-field" 
+                required
+                value={volunteerForm.email}
+                onChange={(e) => setVolunteerForm({...volunteerForm, email: e.target.value})}
+              />
+
+              <select 
+                className="input-field" 
+                required
+                value={volunteerForm.projectId}
+                onChange={(e) => setVolunteerForm({...volunteerForm, projectId: e.target.value})}
+              >
+                <option value="">Select Project to Volunteer For *</option>
+                {projects.map(p => (
+                  <option key={p._id} value={p._id}>{p.title}</option>
+                ))}
+              </select>
+
+              <input 
+                type="text" 
+                placeholder="Role/Position You're Interested In (e.g., Tree Planter)" 
+                className="input-field"
+                value={volunteerForm.role}
+                onChange={(e) => setVolunteerForm({...volunteerForm, role: e.target.value})}
+              />
+
+              <select 
+                className="input-field"
+                value={volunteerForm.availability}
+                onChange={(e) => setVolunteerForm({...volunteerForm, availability: e.target.value})}
+              >
+                <option value="">Your Availability *</option>
+                <option value="Weekends">Weekends</option>
+                <option value="Weekdays">Weekdays</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Flexible">Flexible</option>
+              </select>
+
+              <input 
+                type="number" 
+                placeholder="Hours Per Week You Can Contribute" 
+                className="input-field"
+                value={volunteerForm.hoursAvailable}
+                onChange={(e) => setVolunteerForm({...volunteerForm, hoursAvailable: parseInt(e.target.value) || 0})}
+              />
+
+              <div style={{padding: '1rem', background: '#f9f9f9', borderRadius: '8px', marginBottom: '1rem'}}>
+                <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: '600'}}>Areas of Interest:</label>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem'}}>
+                  {interestOptions.map(interest => (
+                    <label key={interest} style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer'}}>
+                      <input 
+                        type="checkbox" 
+                        checked={volunteerForm.interests.includes(interest)}
+                        onChange={() => handleInterestToggle(interest)}
+                      />
+                      {interest}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <textarea 
+                placeholder="Tell us about yourself (optional)" 
+                className="input-field"
+                rows="3"
+                value={volunteerForm.bio}
+                onChange={(e) => setVolunteerForm({...volunteerForm, bio: e.target.value})}
+              />
+
+              <button type="submit" className="btn btn-primary full-width">Submit Application</button>
             </form>
           ) : (
-            <form className="donation-form">
-              <h2>Secure Donation</h2>
-              <input type="number" placeholder="Amount ($)" className="input-field" />
-              <select className="input-field">
-                <option>Select Project</option>
-                <option>Amazon Reforestation</option>
-                <option>Ocean Cleanup</option>
+            <form className="donation-form" onSubmit={handleDonationSubmit}>
+              <h2>Make a Donation</h2>
+              <p style={{color: '#666', fontSize: '0.9rem'}}>Your contribution creates real impact. Every donation brings us closer to our mission.</p>
+              
+              <input 
+                type="text" 
+                placeholder="Your Full Name *" 
+                className="input-field"
+                required
+                value={donationForm.guestName}
+                onChange={(e) => setDonationForm({...donationForm, guestName: e.target.value})}
+              />
+              
+              <input 
+                type="email" 
+                placeholder="Your Email (for receipt) *" 
+                className="input-field"
+                required
+                value={donationForm.guestEmail}
+                onChange={(e) => setDonationForm({...donationForm, guestEmail: e.target.value})}
+              />
+
+              <select 
+                className="input-field"
+                value={donationForm.projectId}
+                onChange={(e) => setDonationForm({...donationForm, projectId: e.target.value})}
+              >
+                <option value="">Select Project (optional - leave blank for general contribution)</option>
+                {projects.map(p => (
+                  <option key={p._id} value={p._id}>{p.title}</option>
+                ))}
               </select>
-              <button className="btn btn-primary">Proceed to Payment</button>
+
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+                <input 
+                  type="number" 
+                  placeholder="Amount *" 
+                  className="input-field"
+                  required
+                  step="0.01"
+                  value={donationForm.amount}
+                  onChange={(e) => setDonationForm({...donationForm, amount: e.target.value})}
+                />
+
+                <select 
+                  className="input-field"
+                  value={donationForm.currency}
+                  onChange={(e) => setDonationForm({...donationForm, currency: e.target.value})}
+                >
+                  <option value="INR">INR (₹)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+
+              <textarea 
+                placeholder="Message (optional)" 
+                className="input-field"
+                rows="3"
+                value={donationForm.message}
+                onChange={(e) => setDonationForm({...donationForm, message: e.target.value})}
+              />
+
+              <button type="submit" className="btn btn-primary full-width">Donate Now</button>
             </form>
           )}
         </div>
@@ -584,29 +827,304 @@ const Dashboard = ({ user }) => {
   return <div>Role not recognized.</div>;
 };
 
-const AdminDashboard = ({ user }) => (
-  <div className="container section fade-in">
-    <h1>Admin Console</h1>
-    <div className="grid mt-2">
-      <div className="glass p-3">
-        <h3>Content Management</h3>
-        <ul>
-          <li>Update Projects</li>
-          <li>Post Advocacy News</li>
-          <li>Manage About Us</li>
-        </ul>
-      </div>
-      <div className="glass p-3">
-        <h3>User Management</h3>
-        <ul>
-          <li>Approve Volunteers</li>
-          <li>View Donation Records</li>
-          <li>Generate Certificates</li>
-        </ul>
+const AdminDashboard = ({ user }) => {
+  const [tab, setTab] = useState('projects');
+  const [projects, setProjects] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [donations, setDonations] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Form states
+  const [projectForm, setProjectForm] = useState({
+    title: '', description: '', category: '', location: '',
+    challenges: '', outcomes: '', image: '', gallery: [],
+    goalAmount: 0, currentAmount: 0, status: 'Ongoing'
+  });
+
+  // Load data based on tab
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        if (tab === 'projects') {
+          const { data } = await api.getProjects();
+          setProjects(data);
+        } else if (tab === 'members') {
+          const { data } = await api.getMembers();
+          setMembers(data);
+        } else if (tab === 'applications') {
+          const { data } = await api.getAllApplications();
+          setApplications(data);
+        } else if (tab === 'donations') {
+          const { data } = await api.getAllDonations();
+          setDonations(data);
+        }
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [tab]);
+
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+    try {
+      await api.createProject(projectForm);
+      alert('Project created successfully!');
+      setProjectForm({
+        title: '', description: '', category: '', location: '',
+        challenges: '', outcomes: '', image: '', gallery: [],
+        goalAmount: 0, currentAmount: 0, status: 'Ongoing'
+      });
+      const { data } = await api.getProjects();
+      setProjects(data);
+    } catch (err) {
+      alert('Error creating project: ' + err.message);
+    }
+  };
+
+  const handleApproveApplication = async (id) => {
+    try {
+      await api.approveApplication(id);
+      alert('Application approved!');
+      const { data } = await api.getAllApplications();
+      setApplications(data);
+    } catch (err) {
+      alert('Error approving application');
+    }
+  };
+
+  const handleRejectApplication = async (id) => {
+    try {
+      await api.rejectApplication(id);
+      alert('Application rejected!');
+      const { data } = await api.getAllApplications();
+      setApplications(data);
+    } catch (err) {
+      alert('Error rejecting application');
+    }
+  };
+
+  return (
+    <div className="admin-dashboard fade-in">
+      <div className="container section">
+        <h1>Admin Dashboard</h1>
+        
+        {/* Tabs */}
+        <div className="admin-tabs">
+          <button className={tab === 'projects' ? 'active' : ''} onClick={() => setTab('projects')}>Projects</button>
+          <button className={tab === 'members' ? 'active' : ''} onClick={() => setTab('members')}>Members</button>
+          <button className={tab === 'applications' ? 'active' : ''} onClick={() => setTab('applications')}>Volunteer Apps</button>
+          <button className={tab === 'donations' ? 'active' : ''} onClick={() => setTab('donations')}>Donations</button>
+        </div>
+
+        {/* Projects Tab */}
+        {tab === 'projects' && (
+          <div className="admin-section">
+            <h2>Manage Projects</h2>
+            
+            {/* Create Project Form */}
+            <div className="glass p-3 form-section">
+              <h3>Add New Project</h3>
+              <p style={{fontSize: '0.9rem', color: '#666', marginBottom: '1rem'}}>📷 <strong>For images:</strong> Use URLs from Unsplash.com or upload to Imgbb.com/Cloudinary. Local file paths won't work on the web.</p>
+              <form onSubmit={handleCreateProject}>
+                <input 
+                  type="text" 
+                  placeholder="Project Title" 
+                  className="input-field" 
+                  required 
+                  value={projectForm.title}
+                  onChange={(e) => setProjectForm({...projectForm, title: e.target.value})}
+                />
+                <textarea 
+                  placeholder="Description (can be long)" 
+                  className="input-field" 
+                  rows="4"
+                  required 
+                  value={projectForm.description}
+                  onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Category (e.g., Reforestation)" 
+                  className="input-field" 
+                  value={projectForm.category}
+                  onChange={(e) => setProjectForm({...projectForm, category: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Location" 
+                  className="input-field" 
+                  value={projectForm.location}
+                  onChange={(e) => setProjectForm({...projectForm, location: e.target.value})}
+                />
+                <textarea 
+                  placeholder="Challenges Faced" 
+                  className="input-field" 
+                  rows="3"
+                  value={projectForm.challenges}
+                  onChange={(e) => setProjectForm({...projectForm, challenges: e.target.value})}
+                />
+                <textarea 
+                  placeholder="Outcomes & Impact" 
+                  className="input-field" 
+                  rows="3"
+                  value={projectForm.outcomes}
+                  onChange={(e) => setProjectForm({...projectForm, outcomes: e.target.value})}
+                />
+                <input 
+                  type="url" 
+                  placeholder="Cover Image URL" 
+                  className="input-field" 
+                  value={projectForm.image}
+                  onChange={(e) => setProjectForm({...projectForm, image: e.target.value})}
+                />
+                <input 
+                  type="number" 
+                  placeholder="Funding Goal Amount" 
+                  className="input-field" 
+                  value={projectForm.goalAmount}
+                  onChange={(e) => setProjectForm({...projectForm, goalAmount: parseInt(e.target.value)})}
+                />
+                <select 
+                  className="input-field" 
+                  value={projectForm.status}
+                  onChange={(e) => setProjectForm({...projectForm, status: e.target.value})}
+                >
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Future">Future</option>
+                </select>
+                <button className="btn btn-primary full-width">Create Project</button>
+              </form>
+            </div>
+
+            {/* Projects List */}
+            <div className="projects-list">
+              <h3>All Projects ({projects.length})</h3>
+              {projects.map(p => (
+                <div key={p._id} className="glass p-2 project-item">
+                  <h4>{p.title}</h4>
+                  <p>{p.category} • {p.location}</p>
+                  <p className="status-text">Status: {p.status}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Members Tab */}
+        {tab === 'members' && (
+          <div className="admin-section">
+            <h2>View Members</h2>
+            <p style={{color: '#666', marginBottom: '2rem'}}>Members are automatically added via seed data. Contact support to add new members.</p>
+            
+            {/* Members List */}
+            <div className="members-list">
+              <h3>All Members ({members.length})</h3>
+              {members.length === 0 ? (
+                <p>No members found</p>
+              ) : (
+                members.map(m => (
+                  <div key={m._id} className="glass p-3 member-item">
+                    <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+                      {m.photo && <img src={m.photo} alt={m.name} style={{width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover'}} />}
+                      <div>
+                        <h4 style={{margin: 0}}>{m.name}</h4>
+                        <p style={{margin: '0.2rem 0'}}>{m.designation}</p>
+                        <p style={{margin: 0, fontSize: '0.85rem', color: '#999'}}>Type: {m.type}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Applications Tab */}
+        {tab === 'applications' && (
+          <div className="admin-section">
+            <h2>Volunteer Applications</h2>
+            {applications.length === 0 ? (
+              <p>No applications</p>
+            ) : (
+              <div className="applications-list">
+                {applications.map(app => (
+                  <div key={app._id} className={`glass p-3 app-item status-${app.status.toLowerCase()}`}>
+                    <div className="app-header">
+                      <div>
+                        <h4>{app.volunteerId?.name}</h4>
+                        <p>{app.volunteerId?.email}</p>
+                        <p>Project: {app.projectId?.title}</p>
+                        <p>Role: {app.role} • Hours: {app.hoursContributed}</p>
+                        <p className={`status-badge status-${app.status.toLowerCase()}`}>{app.status}</p>
+                      </div>
+                      {app.status === 'Pending' && (
+                        <div className="app-actions">
+                          <button 
+                            className="btn btn-small btn-success" 
+                            onClick={() => handleApproveApplication(app._id)}
+                          >
+                            Approve
+                          </button>
+                          <button 
+                            className="btn btn-small btn-danger" 
+                            onClick={() => handleRejectApplication(app._id)}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Donations Tab */}
+        {tab === 'donations' && (
+          <div className="admin-section">
+            <h2>Donation Records</h2>
+            {donations.length === 0 ? (
+              <p>No donations yet</p>
+            ) : (
+              <div className="donations-list">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th>Donor</th>
+                      <th>Project</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Message</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {donations.map(d => (
+                      <tr key={d._id}>
+                        <td>{d.donorId?.name || d.guestName}</td>
+                        <td>{d.projectId?.title || 'General'}</td>
+                        <td>${d.amount}</td>
+                        <td>{new Date(d.createdAt).toLocaleDateString()}</td>
+                        <td>{d.message || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const VolunteerDashboard = ({ user }) => (
   <div className="container section fade-in">
