@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Heart, Leaf, Users, Globe, ChevronRight, Mail, Phone, MapPin, 
@@ -303,12 +303,14 @@ const ProjectDetail = () => {
             {project.goalAmount > 0 && (
               <div className="glass p-3 funding-card">
                 <h3>Funding Progress</h3>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%` }}></div>
+                <div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: `${Math.min(progressPercent, 100)}%` }}></div>
+                  </div>
+                  <p className="progress-text">${project.currentAmount.toLocaleString()} of ${project.goalAmount.toLocaleString()}</p>
+                  <p className="progress-percent">{Math.round(progressPercent)}% funded</p>
                 </div>
-                <p className="progress-text">${project.currentAmount.toLocaleString()} of ${project.goalAmount.toLocaleString()}</p>
-                <p className="progress-percent">{Math.round(progressPercent)}% funded</p>
-                <Link to="/get-involved" className="btn btn-primary full-width mt-2">Donate to Project</Link>
+                <Link to="/get-involved" className="btn btn-primary full-width">Donate to Project</Link>
               </div>
             )}
           </div>
@@ -476,7 +478,79 @@ const CSR = () => (
 );
 
 const GetInvolved = () => {
-  const [tab, setTab] = useState('volunteer');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const initialTab = searchParams.get('tab') || 'volunteer';
+  const initialProject = searchParams.get('project') || '';
+  const [tab, setTab] = useState(initialTab);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
+  const [amount, setAmount] = useState('');
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data } = await api.getProjects();
+        setProjects(data);
+      } catch (err) {
+        console.error('Error fetching projects:', err);
+      } finally {
+        setLoadingProjects(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    if (!initialProject || projects.length === 0) return;
+    const matchedProject = projects.find(p => p._id === initialProject || p.title === initialProject);
+    if (matchedProject) setSelectedProject(matchedProject._id);
+  }, [initialProject, projects]);
+
+  const handleDonateSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!selectedProject) {
+      alert('Please select a project');
+      return;
+    }
+    if (!amount || Number(amount) <= 0) {
+      alert('Please enter a valid donation amount');
+      return;
+    }
+
+    const user = JSON.parse(localStorage.getItem('user'));
+    const donorId = user?.id || user?._id;
+    if (!donorId) {
+      alert('Please login as a donor to complete the donation.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api.postDonation({
+        donorId,
+        projectId: selectedProject,
+        amount: Number(amount),
+        currency: 'INR',
+        message: 'Repeat donation'
+      });
+      alert('Payment is completed. Thank you for your support!');
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Donation failed:', err);
+      alert('Unable to complete donation. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="get-involved-page fade-in">
       <div className="page-header"><h1>Get Involved</h1></div>
@@ -496,15 +570,28 @@ const GetInvolved = () => {
               <button className="btn btn-primary">Submit Application</button>
             </form>
           ) : (
-            <form className="donation-form">
+            <form className="donation-form" onSubmit={handleDonateSubmit}>
               <h2>Secure Donation</h2>
-              <input type="number" placeholder="Amount ($)" className="input-field" />
-              <select className="input-field">
-                <option>Select Project</option>
-                <option>Amazon Reforestation</option>
-                <option>Ocean Cleanup</option>
+              <input
+                type="number"
+                placeholder="Amount ($)"
+                className="input-field"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+              <select className="input-field" value={selectedProject} onChange={e => setSelectedProject(e.target.value)}>
+                <option value="">Select Project</option>
+                {loadingProjects ? (
+                  <option value="" disabled>Loading projects...</option>
+                ) : (
+                  projects.map((project) => (
+                    <option key={project._id} value={project._id}>{project.title}</option>
+                  ))
+                )}
               </select>
-              <button className="btn btn-primary">Proceed to Payment</button>
+              <button className="btn btn-primary" disabled={submitting}>
+                {submitting ? 'Processing...' : 'Proceed to Payment'}
+              </button>
             </form>
           )}
         </div>
@@ -552,7 +639,9 @@ const SignIn = ({ onLogin }) => {
       onLogin(data.user);
       navigate('/dashboard');
     } catch (err) {
-      alert("Invalid credentials. Try: admin@test.com / password123");
+      alert('Please enter correct login credentials');
+      setEmail('');
+      setPassword('');
     }
   };
 
@@ -628,19 +717,79 @@ const VolunteerDashboard = ({ user }) => (
   </div>
 );
 
-const DonorDashboard = ({ user }) => (
-  <div className="container section fade-in">
-    <h1>Your Giving History</h1>
-    <div className="glass p-3">
-      <table className="w-full">
-        <thead><tr><th>Date</th><th>Project</th><th>Amount</th><th>Action</th></tr></thead>
-        <tbody>
-          <tr><td>2024-04-01</td><td>Clean Water</td><td>$500</td><td><button className="btn-link">Receipt</button></td></tr>
-        </tbody>
-      </table>
+const DonorDashboard = ({ user }) => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const donorId = user?.id || user?._id;
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!donorId) return;
+      try {
+        const { data } = await api.getDonationHistory(donorId);
+        setHistory(data);
+      } catch (err) {
+        setError('Unable to load donation history.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [donorId]);
+
+  const handleDonateAgain = (projectId) => {
+    const params = new URLSearchParams({ tab: 'donate' });
+    if (projectId) params.set('project', projectId);
+    navigate(`/get-involved?${params.toString()}`);
+  };
+
+  return (
+    <div className="container section fade-in">
+      <h1>Your Giving History</h1>
+      <div className="glass p-3 mb-4">
+        <p>Welcome back, {user?.name}. Would you like to donate again? Select any past project below or use the button to go directly to the donation form.</p>
+        <button className="btn btn-primary" onClick={() => handleDonateAgain('')}>Donate Again</button>
+      </div>
+      <div className="glass p-3">
+        <h2>Past Donations</h2>
+        {loading ? (
+          <p>Loading your donor history...</p>
+        ) : error ? (
+          <p className="text-error">{error}</p>
+        ) : history.length === 0 ? (
+          <p>You have not made any donations yet.</p>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Project</th>
+                <th>Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((donation) => (
+                <tr key={donation._id}>
+                  <td>{new Date(donation.date).toLocaleDateString()}</td>
+                  <td>{donation.projectId?.title || 'General Donation'}</td>
+                  <td>{donation.currency} {donation.amount}</td>
+                  <td>
+                    <button className="btn btn-outline" onClick={() => handleDonateAgain(donation.projectId?._id)}>
+                      Donate Again
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Helper component for conditional footer
 const ConditionalFooter = () => {
