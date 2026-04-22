@@ -224,11 +224,11 @@ Girls' enrollment in STEM courses increased by 45% in hub schools compared to na
                 name: 'Dr. Anjali Verma',
                 photo: 'https://i.pravatar.cc/150?img=47',
                 designation: 'Executive Director & Co-Founder',
-                bio: `Dr. Anjali Verma is the visionary leader and co-founder of EcoVacation, where she has driven the organization's mission for over 10 years. With a PhD in Environmental Science from the University of Delhi, Dr. Verma brings deep expertise in conservation strategy and sustainable development.
+                bio: `Dr. Anjali Verma is the visionary leader and co-founder of EcoVation, where she has driven the organization's mission for over 10 years. With a PhD in Environmental Science from the University of Delhi, Dr. Verma brings deep expertise in conservation strategy and sustainable development.
 
-Her career spans two decades working with governmental bodies, international NGOs, and community organizations across Asia and Africa. Dr. Verma has been instrumental in establishing EcoVacation's policy advocacy framework, enabling the organization to influence environmental legislation in 15 countries.
+Her career spans two decades working with governmental bodies, international NGOs, and community organizations across Asia and Africa. Dr. Verma has been instrumental in establishing EcoVation's policy advocacy framework, enabling the organization to influence environmental legislation in 15 countries.
 
-Beyond EcoVacation, she serves on the advisory board of the Global Environmental Forum and is a frequent speaker at international sustainability conferences. Her research on ecosystem restoration has been published in 40+ peer-reviewed journals. Dr. Verma holds a passion for community-led conservation and believes that lasting environmental change must center indigenous knowledge and local empowerment.`,
+Beyond EcoVation, she serves on the advisory board of the Global Environmental Forum and is a frequent speaker at international sustainability conferences. Her research on ecosystem restoration has been published in 40+ peer-reviewed journals. Dr. Verma holds a passion for community-led conservation and believes that lasting environmental change must center indigenous knowledge and local empowerment.`,
                 type: 'TeamMember',
                 portfolio: [
                     { projectName: 'Ocean Plastic Barrier Initiative', description: 'Strategic project lead, secured $2M in international funding', year: '2023' },
@@ -259,11 +259,11 @@ Rahul's holistic approach integrates carbon sequestration goals with biodiversit
                 name: 'Dr. Maya Patel',
                 photo: 'https://i.pravatar.cc/150?img=25',
                 designation: 'Chief Conservation Scientist',
-                bio: `Dr. Maya Patel leads EcoVacation's scientific research and impact measurement initiatives, ensuring all projects are grounded in rigorous environmental science. With a PhD in Marine Biology from Cambridge University, she brings world-class expertise in biodiversity assessment and ecosystem monitoring.
+                bio: `Dr. Maya Patel leads EcoVation's scientific research and impact measurement initiatives, ensuring all projects are grounded in rigorous environmental science. With a PhD in Marine Biology from Cambridge University, she brings world-class expertise in biodiversity assessment and ecosystem monitoring.
 
-Dr. Patel has published 35+ papers in top-tier journals and is a recognized authority on marine protected areas and coastal ecosystem dynamics. She directs a team of 12 scientists who conduct real-time environmental monitoring across all EcoVacation projects.
+Dr. Patel has published 35+ papers in top-tier journals and is a recognized authority on marine protected areas and coastal ecosystem dynamics. She directs a team of 12 scientists who conduct real-time environmental monitoring across all EcoVation projects.
 
-Her work on impact measurement has established industry-leading standards for quantifying conservation outcomes, making EcoVacation a model for transparent, science-backed NGO operations. She works closely with academic partners globally to ensure that field findings contribute to peer-reviewed knowledge about ecosystem restoration.
+Her work on impact measurement has established industry-leading standards for quantifying conservation outcomes, making EcoVation a model for transparent, science-backed NGO operations. She works closely with academic partners globally to ensure that field findings contribute to peer-reviewed knowledge about ecosystem restoration.
 
 Dr. Patel is passionate about translating complex environmental science into understandable insights for policymakers and communities, bridging the gap between laboratory research and on-the-ground conservation practice.`,
                 type: 'TeamMember',
@@ -278,7 +278,7 @@ Dr. Patel is passionate about translating complex environmental science into und
                 name: 'Priya Sharma',
                 photo: 'https://i.pravatar.cc/150?img=32',
                 designation: 'Senior Field Volunteer',
-                bio: `Priya Sharma is a dedicated field volunteer who has contributed over 500 hours to EcoVacation's reforestation and water conservation initiatives. Working as a structural engineer by profession, she has brought her technical expertise to project implementation while volunteering her skills for community benefit.
+                bio: `Priya Sharma is a dedicated field volunteer who has contributed over 500 hours to EcoVation's reforestation and water conservation initiatives. Working as a structural engineer by profession, she has brought her technical expertise to project implementation while volunteering her skills for community benefit.
 
 Passionate about combining environmental action with social equity, Priya focuses on projects that directly benefit marginalized communities. She led the community engagement strategy for the Amazon Reforestation project, building trust with indigenous groups and ensuring their voices shaped project design.
 
@@ -294,7 +294,7 @@ Her work has touched the lives of 1,500+ community members, and she has mentored
                 name: 'Marcus Johnson',
                 photo: 'https://i.pravatar.cc/150?img=41',
                 designation: 'Ocean Cleanup Coordinator',
-                bio: `Marcus Johnson brings professional expertise from the maritime industry to EcoVacation's ocean conservation work. A marine engineer with 8 years of experience, he has volunteered 300+ hours designing and implementing innovative solutions for ocean plastic collection.
+                bio: `Marcus Johnson brings professional expertise from the maritime industry to EcoVation's ocean conservation work. A marine engineer with 8 years of experience, he has volunteered 300+ hours designing and implementing innovative solutions for ocean plastic collection.
 
 His engineering background has been crucial in developing the modular design of our plastic barriers, incorporating feedback from both oceanographers and frontline cleanup teams. Marcus works collaboratively with environmental scientists to ensure that technical solutions are ecologically sound and operationally efficient.
 

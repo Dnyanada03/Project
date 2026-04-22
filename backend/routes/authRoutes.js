@@ -50,4 +50,25 @@ router.get('/profile', async (req, res) => {
     }
 });
 
+// Update Profile
+router.put('/profile', async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'No token' });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+        const { availability, bio, designation, interests } = req.body;
+        
+        const updatedUser = await User.findByIdAndUpdate(
+            decoded.id,
+            { availability, bio, designation, interests },
+            { new: true }
+        ).select('-password');
+        
+        res.json(updatedUser);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
 module.exports = router;

@@ -39,7 +39,37 @@ router.post('/apply', async (req, res) => {
     try {
         const activity = new Activity(req.body);
         const newActivity = await activity.save();
+
+        // Check if member already exists to avoid duplicates
+        const existingMember = await Member.findOne({ name: req.body.volunteerName, type: 'Volunteer' });
+        if (!existingMember) {
+            const newMember = new Member({
+                name: req.body.volunteerName,
+                type: 'Volunteer',
+                designation: req.body.role || 'Volunteer',
+                bio: req.body.bio || ''
+            });
+            await newMember.save();
+        }
+
         res.status(201).json(newActivity);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// Update an activity (hours and availability)
+router.put('/activities/:id', async (req, res) => {
+    try {
+        const { hoursContributed, availability } = req.body;
+        const updatedActivity = await Activity.findByIdAndUpdate(
+            req.params.id,
+            { hoursContributed, availability },
+            { new: true }
+        ).populate('projectId', 'title');
+        
+        if (!updatedActivity) return res.status(404).json({ message: 'Activity not found' });
+        res.json(updatedActivity);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }
