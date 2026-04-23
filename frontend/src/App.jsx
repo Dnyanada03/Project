@@ -1505,10 +1505,12 @@ const DonorDashboard = ({ user }) => {
 
   return (
     <div className="container section fade-in">
-      <h1>Your Giving History</h1>
+      <h1>{history.length > 0 ? 'Your Giving History' : 'Start Your Giving Journey'}</h1>
       <div className="glass p-3 mb-4">
-        <p>Welcome back, {user?.name}. Would you like to donate again?</p>
-        <button className="btn btn-primary" onClick={() => handleDonateAgain('')}>Donate Again</button>
+        <p>Welcome back, {user?.name}. {history.length > 0 ? 'Would you like to donate again?' : 'Ready to make your first donation?'}</p>
+        <button className="btn btn-primary" onClick={() => handleDonateAgain('')}>
+          {history.length > 0 ? 'Donate Again' : 'Donate Now'}
+        </button>
       </div>
       <div className="glass p-3">
         <h2>Past Donations</h2>
